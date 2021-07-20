@@ -5,6 +5,7 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from bs4 import BeautifulSoup
 from queue import Queue
 import random
+from datetime import datetime as dt, timedelta
 
 
 class LinkMonitor:
@@ -15,6 +16,7 @@ class LinkMonitor:
         self.base_url = 'https://s2.coinmarketcap.com/static/img/coins/64x64'
         self.number = self.config.get('STARTING_CHECK_IMAGE_NUMBER')
         self.dc = DesiredCapabilities.CHROME
+        self.next_time = dt.now() + timedelta(hours=4)
 
     def get_url(self):
         return f'{self.base_url}/{self.number}.png'
@@ -33,7 +35,20 @@ class LinkMonitor:
             URL = self.get_url()
             image = await self.get_image(URL)
             if not image:
-                # await asyncio.sleep(2)
+                current = dt.now()
+                if current >= self.next_time:
+                    # Timeout waiting for image ..
+                    self.number += 1
+                    URL = self.get_url()
+                    image = await self.get_image(URL)
+                    if image:
+                        search_url = await self.create_google_image_search(URL)
+                        self.queue.put((image, search_url))
+                        self.number += 1
+                        self.next_time = dt.now() + timedelta(hours=4)
+                        continue
+                    self.number -= 1
+
                 continue
             print(f'Image found on {URL}')
             # await self.random_sleep(2, 3)
