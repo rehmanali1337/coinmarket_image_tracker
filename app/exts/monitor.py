@@ -5,6 +5,7 @@ from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
 from bs4 import BeautifulSoup
 from queue import Queue
 import random
+import traceback
 from datetime import datetime as dt, timedelta
 
 
@@ -58,28 +59,35 @@ class LinkMonitor:
             # await asyncio.sleep(2)
 
     async def get_image(self, URL):
-        self.driver.get(URL)
-        soup = BeautifulSoup(self.driver.page_source, features="lxml")
-        img = soup.find("img")
-        return img.get_attribute_list("src")[0] if img else None
+        try:
+            self.driver.get(URL)
+            soup = BeautifulSoup(self.driver.page_source, features="lxml")
+            img = soup.find("img")
+            return img.get_attribute_list("src")[0] if img else None
+        except Exception as e:
+            traceback.print_exc()
+            return None
 
     async def create_google_image_search(self, image_url):
         print('Creating google image search URL ...')
-        self.driver.get("https://images.google.com")
-        # await self.random_sleep(1, 2)
-        upload = self.driver.find_element_by_xpath(
-            "/html/body/div[2]/div[2]/div/form/div[1]/div[1]/div[1]/div/div[3]/div[2]")
-        upload.click()
-        # await self.random_sleep(2, 5)
-        box = self.driver.find_element_by_xpath(
-            "/html/body/div[2]/div[2]/div/div/div[2]/form/div[1]/table/tbody/tr/td[1]/input")
-        box.send_keys(image_url)
-        # await self.random_sleep(2, 5)
-        search_btn = self.driver.find_element_by_xpath(
-            "/html/body/div[2]/div[2]/div/div/div[2]/form/div[1]/table/tbody/tr/td[2]/input")
-        search_btn.click()
-        # await self.random_sleep(1, 3)
-        return self.driver.current_url
+        try:
+            self.driver.get("https://images.google.com")
+            # await self.random_sleep(1, 2)
+            upload = self.driver.find_element_by_xpath(
+                "/html/body/div[2]/div[2]/div/form/div[1]/div[1]/div[1]/div/div[3]/div[2]")
+            upload.click()
+            # await self.random_sleep(2, 5)
+            box = self.driver.find_element_by_xpath(
+                "/html/body/div[2]/div[2]/div/div/div[2]/form/div[1]/table/tbody/tr/td[1]/input")
+            box.send_keys(image_url)
+            # await self.random_sleep(2, 5)
+            search_btn = self.driver.find_element_by_xpath(
+                "/html/body/div[2]/div[2]/div/div/div[2]/form/div[1]/table/tbody/tr/td[2]/input")
+            search_btn.click()
+            # await self.random_sleep(1, 3)
+            return self.driver.current_url
+        except Exception as e:
+            traceback.print_exc()
 
     async def random_sleep(self, a, b):
         await asyncio.sleep(random.randint(a, b))
